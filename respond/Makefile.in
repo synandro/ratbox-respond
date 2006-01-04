@@ -1,0 +1,24 @@
+# $Id$
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
+SSL_LIBS	= @SSL_LIBS@
+
+CC		= @CC@
+RM		= @RM@
+
+all: build
+
+build: ratbox-respond.c
+	${CC} ${CFLAGS} -o ratbox-respond ratbox-respond.c ${LDFLAGS} ${SSL_LIBS} ${LIBS}
+
+clean:
+	${RM} -f ratbox-respond *~
+
+distclean: clean
+	${RM} -f config.status config.cache config.log setup.h Makefile
