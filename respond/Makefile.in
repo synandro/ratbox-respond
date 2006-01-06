@@ -1,4 +1,7 @@
 # $Id$
+# 
+# Copyright (C) 2005 ircd-ratbox development team
+# This code is in the public domain.
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
