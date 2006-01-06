@@ -2890,6 +2890,9 @@ _ACEOF
 fi
 
 
+CPPFLAGS="-I /usr/include"
+LIBS="-L /usr/lib"
+
 echo "$as_me:$LINENO: checking for OpenSSL" >&5
 echo $ECHO_N "checking for OpenSSL... $ECHO_C" >&6
 # Check whether --enable-openssl or --disable-openssl was given.
@@ -3089,6 +3092,8 @@ fi
 
 CPPFLAGS="$save_CPPFLAGS"
 LIBS="$save_LIBS"
+
+
 
 
 

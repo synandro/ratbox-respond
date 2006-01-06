@@ -206,7 +206,7 @@ main(int argc, char **argv)
 {
 	FILE *kfile;
 	RSA *rsa = NULL;
-	SHA256_CTX ctx;
+	SHA_CTX ctx;
 	unsigned char *ptr;
 	unsigned char *ndata, ddata[512];
 	int len;
@@ -249,10 +249,10 @@ main(int argc, char **argv)
 		return -1;
 	}
 
-	SHA256_Init(&ctx);
-	SHA256_Update(&ctx, (unsigned char *)ddata, len);
-	SHA256_Final((unsigned char *)ddata, &ctx);
-	ndata = base64_encode((unsigned char *)ddata, SHA256_DIGEST_LENGTH);
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, (unsigned char *)ddata, len);
+	SHA1_Final((unsigned char *)ddata, &ctx);
+	ndata = base64_encode((unsigned char *)ddata, SHA_DIGEST_LENGTH);
 	if(isatty(fileno(stdin)))
 	{
 		fprintf(stderr, "Response: /quote CHALLENGE +");

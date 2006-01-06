@@ -5,6 +5,7 @@ exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 
 CFLAGS		= @CFLAGS@
+CPPFLAGS	= @CPPFLAGS@
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@
 SSL_INCLUDES	= @SSL_INCLUDES@
@@ -16,7 +17,7 @@ RM		= @RM@
 all: build
 
 build: ratbox-respond.c
-	${CC} ${CFLAGS} ${SSL_INCLUDES} -o ratbox-respond ratbox-respond.c ${LDFLAGS} ${SSL_LIBS} ${LIBS}
+	${CC} ${CFLAGS} ${CPPFLAGS} ${SSL_INCLUDES} -o ratbox-respond ratbox-respond.c ${LDFLAGS} ${LIBS} ${SSL_LIBS}
 
 clean:
 	${RM} -f ratbox-respond *~
