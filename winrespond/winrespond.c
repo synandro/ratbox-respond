@@ -338,7 +338,7 @@ static UINT DoChallenge(char *prvkey, char *passphrase, char *challenge,
 {
 	FILE *kfile;
 	RSA *rsa = NULL;
-	SHA256_CTX ctx;
+	SHA_CTX ctx;
 	unsigned char *ndata, ddata[512];
 	int len;
 
@@ -362,10 +362,10 @@ static UINT DoChallenge(char *prvkey, char *passphrase, char *challenge,
 	if (RSA_private_decrypt(len, (unsigned char*)ndata, (unsigned char*)ddata, rsa, RSA_PKCS1_OAEP_PADDING) == -1)
 		return DOC_DEC;
 	
-	SHA256_Init(&ctx);
-	SHA256_Update(&ctx, (unsigned char *)ddata, len);
-	SHA256_Final((unsigned char *)ddata, &ctx);
-	ndata = base64_encode((unsigned char *)ddata, SHA256_DIGEST_LENGTH);
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, (unsigned char *)ddata, len);
+	SHA1_Final((unsigned char *)ddata, &ctx);
+	ndata = base64_encode((unsigned char *)ddata, SHA_DIGEST_LENGTH);
 	strcpy(response, ndata);
 	free(ndata);
 	return DOC_GOOD;
