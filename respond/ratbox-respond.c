@@ -37,7 +37,11 @@ static int pass_cb(char *buf, int size, int rwflag, void *u)
 {
 	int len;
         char *tmp;
-        if(!isatty(fileno(stdin))) {
+
+	called_passcb++;
+
+        if(!isatty(fileno(stdin)))
+	{
         	if(fgets(buf, size, stdin) == NULL)
         		return 0;
 		tmp = strpbrk(buf, "\r\n");
@@ -52,7 +56,6 @@ static int pass_cb(char *buf, int size, int rwflag, void *u)
         if (len > size)
         	len = size;
         memcpy(buf, tmp, len);
-        called_passcb++;
         return len;
 }
 
@@ -183,7 +186,8 @@ base64_decode(const unsigned char *str, int length, int *ret)
 unsigned char *
 read_challenge(FILE *f)
 {
-	static unsigned char buf[16384];	
+	static unsigned char buf[16384];
+	char *tmp;
 
 	if(isatty(fileno(f)))
 	{
@@ -196,7 +200,13 @@ read_challenge(FILE *f)
 		}
 	}
 
-	fread(buf, sizeof(buf), 1, f);
+        fgets(buf, sizeof(buf), stdin);
+
+	tmp = strpbrk(buf, "\r\n");
+	if(tmp != NULL)
+		*tmp = '\0';
+
+//	fread(buf, sizeof(buf), 1, f);
 	return buf;
 }
 
@@ -210,26 +220,27 @@ main(int argc, char **argv)
 	unsigned char *ptr;
 	unsigned char *ndata, ddata[512];
 	int len;
+
 	/* respond privatefile challenge */
 	if (argc < 2)
 	{
-		puts("Usage: respond privatefile");
-		return 0;
+		puts("Error: Usage: respond privatefile");
+		return -1;
 	}
 
 	if (!(kfile = fopen(argv[1], "r")))
 	{
-		puts("Could not open the private keyfile.");
-		return 0;
+		puts("Error: Could not open the private keyfile.");
+		return -1;
 	}
-	
+
 	SSLeay_add_all_ciphers();
 	rsa = PEM_read_RSAPrivateKey(kfile, NULL,pass_cb, NULL);
-  
+
 	if(!rsa)
 	{
-		puts("Unable to read your private key, is the passphrase wrong?\n");
-		return 0;
+		puts("Error: Unable to read your private key, is the passphrase wrong?");
+		return -1;
 	}
 
 	fclose(kfile);
@@ -238,14 +249,14 @@ main(int argc, char **argv)
 	ndata = base64_decode(ptr, strlen((char *)ptr), &len);
 	if (ndata == NULL)
 	{
-		puts("Bad challenge.");
+		puts("Error: Bad challenge.");
 		return -1;
 	}
-	
+
 	if ((len = RSA_private_decrypt(len, (unsigned char*)ndata,
 		(unsigned char*)ddata, rsa, RSA_PKCS1_OAEP_PADDING)) == -1)
 	{
-		puts("Decryption error.");
+		puts("Error: Decryption error.");
 		return -1;
 	}
 
@@ -258,5 +269,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "Response: /quote CHALLENGE +");
 	}
 	puts((char *)ndata);
+	fflush(NULL);
 	return 0;
 }
