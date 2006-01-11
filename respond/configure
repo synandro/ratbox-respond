@@ -808,7 +808,6 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-openssl=DIR  Enable OpenSSL support (DIR optional).
-cf_enable_openssl=$enableval
 
 Some influential environment variables:
   CC          C compiler command
@@ -2898,6 +2897,8 @@ echo $ECHO_N "checking for OpenSSL... $ECHO_C" >&6
 # Check whether --enable-openssl or --disable-openssl was given.
 if test "${enable_openssl+set}" = set; then
   enableval="$enable_openssl"
+  cf_enable_openssl=$enableval
+else
   cf_enable_openssl="auto"
 fi;
 

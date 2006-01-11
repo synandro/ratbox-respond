@@ -27,7 +27,7 @@ LIBS="-L /usr/lib"
 dnl OpenSSL support
 AC_MSG_CHECKING(for OpenSSL)
 AC_ARG_ENABLE(openssl,
-[AC_HELP_STRING([--enable-openssl[=DIR]],[Enable OpenSSL support (DIR optional).])]
+[AC_HELP_STRING([--enable-openssl[=DIR]],[Enable OpenSSL support (DIR optional).])],
 [cf_enable_openssl=$enableval],
 [cf_enable_openssl="auto"])
 
