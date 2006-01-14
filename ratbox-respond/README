@@ -1,31 +1,56 @@
-                                rsa_respond
+- ratbox-respond -
+------------------
+ratbox-respond takes the challenge from the server and creates a valid 
+response to pass back to the server.
 
-respond:
+ratbox-respond will run either interactively, or can have input piped to it
+through stdin.
 
-respond takes the challenge from the server and creates a valid response
-to pass back to the server.
+- Compiling -
+-------------
+Run:
+	./configure
+	make
 
-Syntax:
-$ ./respond <private key> <challenge>
+This will generate a 'ratbox-respond' binary, which you may place wherever
+you like. If configure does not detect your openssl installation, you may
+pass it the directory where it is installed to via --enable-openssl, this
+should be the base directory which has lib/ and include/openssl/ within it:
+	./configure --enable-openssl=/path/to/opensslbase
 
-Notes:
 
-The private key file is protected by a passphrase, entered when the key is
-created.  The passphrase is prompted for whenever respond is called.
+- ratbox-respond usage -
+------------------------
+ratbox-respond takes only one argument, the path to your private key:
+	./ratbox-respond /path/to/private.key
 
-Compiling:
 
-Untar the distribution
-Read this document
-Run 'make'
+- Interactive mode -
+--------------------
+ratbox-respond runs in interactive mode when it detects theres a tty
+attached (eg, you run ./ratbox-respond from a normal shell).  This will
+prompt for keyphrases and the challenge, and will generate the output to be
+given to ircd.
 
-libcrypto from OpenSSL must be available in order to use this program.
 
-Note that you may have to explicitly add -L/usr/local/lib if OpenSSL
-was installed there, instead of one of the system library paths.
+- Non-interactive mode -
+------------------------
+To allow for ratbox-respond to be called from a script, input may be piped
+to ratbox-respond through stdin.  The format of the input is:
+	keyphrase\nchallenge\n
 
-System support:
-genkey and respond compile properly, and have been tested on FreeBSD 4.x,
-Linux glibc, and Cygwin 1.2 or higher.
+If there is no keyphrase, the \n preceding the challenge from ircd must
+still be sent.  Output will be given on stdout, and will be just the
+response needed to be sent back to ircd.
 
-# $Id$
+It is required that input is piped for security reasons, as allowing the
+keyphrase to appear in ps is insecure.
+
+An example to illustrate this is:
+	echo "keyphrase\nchallenge" | /path/to/ratbox-respond /path/to/key
+Though this is equally insecure, as the echo will appear in process lists.
+It can be done better in perl for example, by using the open2() function,
+see client-scripts/challenge-xchat.pl for an implementation.
+
+-- 
+- $Id: README 8884 2001-10-25 05:21:13Z wcampbel -
