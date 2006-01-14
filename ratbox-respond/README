@@ -53,4 +53,4 @@ It can be done better in perl for example, by using the open2() function,
 see client-scripts/challenge-xchat.pl for an implementation.
 
 -- 
-- $Id: README 8884 2001-10-25 05:21:13Z wcampbel -
+- $Id$ -
