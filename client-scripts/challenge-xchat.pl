@@ -89,6 +89,15 @@ sub handle_rpl_endofrsachallenge2
 {
 	Xchat::print("ratbox-challenge: Received challenge, generating response..");
 
+	# we do an open() here, because it seems far more robust at
+	# detecting respond not existing than open2()
+	unless(open(RESPOND, "|$respond_path $private_key_path"))
+	{
+		Xchat::print("ratbox-challenge: Unable to execute respond from $respond_path");
+		return Xchat::EAT_ALL;
+	}
+	close(RESPOND);
+
 	unless(open2(*Reader, *Writer, "$respond_path $private_key_path"))
 	{
 		Xchat::print("ratbox-challenge: Unable to execute respond from $respond_path");
