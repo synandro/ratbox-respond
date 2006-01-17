@@ -1,0 +1,63 @@
+if (word(2 $loadinfo()) != [pf]) {
+	load -pf $word(1 $loadinfo());
+	return;
+};
+
+#	Copyright (c) 2006 David B. Kratter (BlackJac@EFNet)
+
+#	Version: 3.0.2006.01.17.1
+
+xdebug +new_math;
+
+#########################
+# Configuration Variables
+#########################
+
+# Location and filename of the CHALLENGE respond binary
+@ challenge.bin = [~/.irc/ratbox-respond];
+
+# Location and filename of the CHALLENGE private key
+@ challenge.key = [~/.irc/private.key];
+
+# Require a CHALLENGE passphrase (0 = no | 1 = yes)
+@ challenge.pass = 1;
+
+########################
+# END OF CONFIGURATION #
+########################
+
+alias challenge (nick default "$servernick()", void) {
+	quote challenge $nick;
+};
+
+^on ^740 "*" {
+	@ challenge.recv #= *1;
+};
+
+^on ^741 "*" {
+	if (fexist($challenge.bin) == 1 && fexist($challenge.key) == 1) {
+		^exec -name challenge $challenge.bin $challenge.key;
+		if (challenge.pass) {
+			input -noecho "Enter passphrase for CHALLENGE: " {
+				^msg %challenge $*;
+				^msg %challenge $challenge.recv;
+			};
+		} else {
+			^msg %challenge \n;
+			^msg %challenge $challenge.recv;
+		};
+	} else {
+		xecho -b Unable to find "$after(-1 / $challenge.bin)" or "$after(-1 / $challenge.key)";
+	};
+};
+
+^on ^exec "challenge *" {
+	if (*2) {
+		xecho -b $1-;
+	} else {
+		quote challenge +$1;
+	};
+	@ challenge.recv = [];
+};
+
+# EOF
