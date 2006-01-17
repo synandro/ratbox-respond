@@ -1,0 +1,63 @@
+- Client scripts for ircd-ratbox challenge -
+--------------------------------------------
+This directory contains a number of client scripts to help automate opering
+using ircd-ratbox challenge.
+
+- X-Chat -
+----------
+challenge-xchat.pl is the xchat script, written by Lee Hardy (anfl@EFNet).
+
+There are configuration options set at the top of the script that should be 
+edited before use.  
+
+To use this script, simply place it in your home xchat2 directory, (normally 
+~/.xchat2/) where it will load automatically when xchat starts, or type:
+	/load /path/to/challenge-xchat.pl
+
+The script allows you to do:
+	/challenge <opername> [keyphrase]
+
+[keyphrase] is optional and should be used if your private key has one.
+
+
+- irssi -
+---------
+challenge-irssi.pl is the irssi script, written by James Seward
+(JamesOff@efnet), based on Andreas Broeckings script (zap@efnet).
+
+Configuration is done through irssi itself:
+	/set ro_challenge_respond <path to binary>
+	/set ro_challenge_keyfile <path to private key file>
+
+To use this script, place it in ~/.irssi/scripts, and if you want it to load
+automatically when irssi starts:
+	ln -s ~/.irssi/scripts/challenge-irssi.pl ~/.irssi/scripts/autorun/.
+or to load it manually, type:
+	/script load challenge-irssi.pl
+
+The script allows you to do:
+	/challenge <opername> [keyphrase]
+
+[keyphrase] is optional and should be used if your private key has one.
+
+- epic -
+--------
+challenge-epic.irc is the epic script, written by David B. Kratter
+(BlackJac@efnet).
+
+There are configuration options set at the top of the script that should be
+edited before use.  
+
+To use this script, add:
+	load /path/to/challenge-epic.irc
+to ~/.epicrc, where it will load automatically when epic starts, or type:
+	/load /path/to/challenge-epic.irc
+
+The script allows you to do:
+	/challenge <opername>
+
+You will be prompted for a keyphrase if the script is configured as needing
+to request one.
+
+-- 
+$Id$
