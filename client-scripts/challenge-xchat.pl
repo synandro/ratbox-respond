@@ -30,7 +30,7 @@ my $script_version = "1.0";
 my $script_descr = "CHALLENGE opering script for use with ircd-ratbox";
 
 Xchat::register($script_name, $script_version, $script_descr, "");
-Xchat::print("Loading $script_name $script_version - $script_descr");
+Xchat::print("Loading $script_name $script_version - $script_descr\n");
 
 my $pkg == __PACKAGE__;
 
@@ -41,7 +41,7 @@ Xchat::hook_server("740", "${pkg}::handle_rpl_rsachallenge2");
 Xchat::hook_server("741", "${pkg}::handle_rpl_endofrsachallenge2");
 
 my $challenge_options = {
-	help_text => "Usage: /challenge <opername> [keyphrase]"
+	help_text => "Usage: /challenge <opername> [keyphrase]\n"
 };
 
 Xchat::hook_command("CHALLENGE", "${pkg}::handle_challenge", $challenge_options);
@@ -52,7 +52,7 @@ sub handle_challenge
 
 	if(!$opername)
 	{
-		Xchat::print("Usage: /challenge <opername> [keyphrase]");
+		Xchat::print("Usage: /challenge <opername> [keyphrase]\n");
 		return Xchat::EAT_ALL;
 	}
 
@@ -78,20 +78,21 @@ sub handle_rpl_rsachallenge2
 
 sub handle_rpl_endofrsachallenge2
 {
-	Xchat::print("ratbox-challenge: Received challenge, generating response..");
+	Xchat::print("ratbox-challenge: Received challenge, generating response..\n");
 
-	# we do an open() here, because it seems far more robust at
-	# detecting respond not existing than open2()
-	unless(open(RESPOND, "|$respond_path $private_key_path"))
+	if(! -x $respond_path)
 	{
-		Xchat::print("ratbox-challenge: Unable to execute respond from $respond_path");
+		Xchat::print("ratbox-challenge: Unable to execute respond from $respond_path\n");
 		return Xchat::EAT_ALL;
 	}
-	close(RESPOND);
 
+	if(! -r $private_key_path)
+	{
+		Xchat::print("ratbox-challenge: Unable to open $private_key_path\n");
+	}
 	unless(open2(*Reader, *Writer, "$respond_path $private_key_path"))
 	{
-		Xchat::print("ratbox-challenge: Unable to execute respond from $respond_path");
+		Xchat::print("ratbox-challenge: Unable to execute respond from $respond_path\n");
 		return Xchat::EAT_ALL;
 	}
 
@@ -112,11 +113,11 @@ sub handle_rpl_endofrsachallenge2
 
 	if($output =~ /^Error:/)
 	{
-		Xchat::print("ratbox-challenge: $output");
+		Xchat::print("ratbox-challenge: $output\n");
 		return Xchat::EAT_ALL;
 	}
 
-	Xchat::print("ratbox-challenge: Received response, opering..");
+	Xchat::print("ratbox-challenge: Received response, opering..\n");
 
 	Xchat::command("QUOTE CHALLENGE +$output");
 
