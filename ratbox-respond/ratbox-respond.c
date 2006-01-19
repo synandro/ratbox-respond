@@ -200,9 +200,9 @@ read_challenge(FILE *f)
 		}
 	}
 
-        fgets(buf, sizeof(buf), stdin);
+        fgets((char *)buf, sizeof(buf), stdin);
 
-	tmp = strpbrk(buf, "\r\n");
+	tmp = strpbrk((char *)buf, "\r\n");
 	if(tmp != NULL)
 		*tmp = '\0';
 
