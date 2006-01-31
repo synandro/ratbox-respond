@@ -47,8 +47,8 @@ The script allows you to do:
 
 - epic -
 --------
-challenge-epic5.irc are the epic scripts, written by David B. Kratter
-(BlackJac@efnet).
+challenge-epic4.irc and challenge-epic5.irc are the epic scripts, written 
+by David B. Kratter (BlackJac@efnet).
 
 The epic5 configuration is done through epic itself:
 	/set challenge_bin <path to binary>
@@ -60,10 +60,10 @@ In the epic4 script, there are configuration options set at the top of the
 script that should be edited before use. 
 
 To use this script, add:
-	load /path/to/challenge-epic.irc
+	load /path/to/challenge-epicN.irc
 to ~/.epicrc, where it will load automatically when epic starts, or to load
 it manually type:
-	/load /path/to/challenge-epic.irc
+	/load /path/to/challenge-epicN.irc
 
 The script allows you to do:
 	/challenge <opername>
