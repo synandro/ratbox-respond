@@ -5,26 +5,20 @@ if (word(2 $loadinfo()) != [pf]) {
 
 #	Copyright (c) 2006 David B. Kratter (BlackJac@EFNet)
 
-#	Version: 3.0.2006.01.17.1
+#	Version: 3.0.2006.01.29.1
+
+#	Requires: EPIC4 or EPIC5
 
 xdebug +new_math;
 
-#########################
-# Configuration Variables
-#########################
-
 # Location and filename of the CHALLENGE respond binary
-@ challenge.bin = [~/.irc/ratbox-respond];
+@ challenge_bin = [~/.irc/ratbox-respond];
 
 # Location and filename of the CHALLENGE private key
-@ challenge.key = [~/.irc/private.key];
+@ challenge_key = [~/.irc/private.key];
 
 # Require a CHALLENGE passphrase (0 = no | 1 = yes)
-@ challenge.pass = 1;
-
-########################
-# END OF CONFIGURATION #
-########################
+@ challenge_pass = 1;
 
 alias challenge (nick default "$servernick()", void) {
 	quote challenge $nick;
@@ -35,9 +29,9 @@ alias challenge (nick default "$servernick()", void) {
 };
 
 ^on ^741 "*" {
-	if (fexist($challenge.bin) == 1 && fexist($challenge.key) == 1) {
-		^exec -name challenge $challenge.bin $challenge.key;
-		if (challenge.pass) {
+	if (fexist($challenge_bin) == 1 && fexist($challenge_key) == 1) {
+		^exec -name challenge $challenge_bin $challenge_key;
+		if (challenge_pass) {
 			input -noecho "Enter passphrase for CHALLENGE: " {
 				^msg %challenge $*;
 				^msg %challenge $challenge.recv;
@@ -47,7 +41,8 @@ alias challenge (nick default "$servernick()", void) {
 			^msg %challenge $challenge.recv;
 		};
 	} else {
-		xecho -b Unable to find "$after(-1 / $challenge.bin)" or "$after(-1 / $challenge.key)";
+		xecho -b Unable to find "$after(-1 / $challenge_bin)" or "$after(-1 / $challenge_key)";
+		@ challenge.recv = [];
 	};
 };
 
@@ -59,5 +54,7 @@ alias challenge (nick default "$servernick()", void) {
 	};
 	@ challenge.recv = [];
 };
+
+^on ^exec_exit "challenge *" #;
 
 # EOF
