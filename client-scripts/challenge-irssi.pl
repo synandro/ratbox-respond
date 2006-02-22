@@ -7,6 +7,7 @@
 # Changelog:
 #
 # v1.0 Initial version
+# v1.1 Avoid leaving zombies
 
 use strict;
 use vars qw($VERSION %IRSSI);
@@ -23,7 +24,7 @@ use FileHandle;
 	description	=> 'Implementation of ratbox2.2 ssl-based challenge-response-authentication for IRC operators',
 	license	=> 'GPL',
 	url		=> 'http://www.jamesoff.net/',
-	changed	=> '2006-01-15'
+	changed	=> '2006-02-22'
 );
 
 
@@ -93,6 +94,7 @@ sub event_challenge_rpl {
 sub event_challenge_rpl_end {
 	my ($server, $blah) = @_;
 	my $debug = Irssi::settings_get_bool("ro_challenge_debug");
+	my $pid;
 
 	Irssi::print("challenge: Received all challenge text, running response...") if ($debug);
 
@@ -120,7 +122,7 @@ sub event_challenge_rpl_end {
 		return 0;
 	}
 
-	unless (open2(*Reader, *Writer, "$respond_path $keyfile_path")) {
+	unless ($pid = open2(*Reader, *Writer, $respond_path, $keyfile_path)) {
 		Irssi::print("challenge: couldn't exec respond, failed!");
 		return 0;
 	}
@@ -136,6 +138,8 @@ sub event_challenge_rpl_end {
 
 	my $output = scalar <Reader>;
 	chomp($output);
+
+	waitpid $pid, 0;
 
 	if ($output =~ /^Error:/) {
 		$output =~ s/^Error: //;
