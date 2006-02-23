@@ -25,8 +25,16 @@ my $private_key_path = "/home/leeh/respond/private.key";
 # END CONFIGURATION
 ###################
 
+#####################
+# Version Information
+#
+# 1.0 - Initial version
+# 1.1 - Avoid leaving zombie ratbox-respond processes around
+#
+#####################
+
 my $script_name = "ratbox-challenge";
-my $script_version = "1.0";
+my $script_version = "1.1";
 my $script_descr = "CHALLENGE opering script for use with ircd-ratbox";
 
 Xchat::register($script_name, $script_version, $script_descr, "");
@@ -78,6 +86,8 @@ sub handle_rpl_rsachallenge2
 
 sub handle_rpl_endofrsachallenge2
 {
+	my $pid;
+
 	Xchat::print("ratbox-challenge: Received challenge, generating response..\n");
 
 	if(! -x $respond_path)
@@ -90,7 +100,7 @@ sub handle_rpl_endofrsachallenge2
 	{
 		Xchat::print("ratbox-challenge: Unable to open $private_key_path\n");
 	}
-	unless(open2(*Reader, *Writer, "$respond_path $private_key_path"))
+	unless($pid = open2(*Reader, *Writer, $respond_path, $private_key_path))
 	{
 		Xchat::print("ratbox-challenge: Unable to execute respond from $respond_path\n");
 		return Xchat::EAT_ALL;
@@ -109,7 +119,7 @@ sub handle_rpl_endofrsachallenge2
 	my $output = scalar <Reader>;
 	chomp($output);
 
-	close(RESPOND);
+	waitpid $pid, 0;
 
 	if($output =~ /^Error:/)
 	{
