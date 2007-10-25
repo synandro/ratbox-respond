@@ -21,8 +21,8 @@ AC_LANG(C)
 
 AC_HEADER_STDC
 
-CPPFLAGS="-I /usr/include"
-LIBS="-L /usr/lib"
+CPPFLAGS="-I/usr/include"
+LIBS="-L/usr/lib"
 
 dnl OpenSSL support
 AC_MSG_CHECKING(for OpenSSL)
