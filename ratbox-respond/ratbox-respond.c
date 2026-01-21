@@ -91,7 +91,7 @@ static const short base64_reverse_table[256] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 };
 
-unsigned char *
+static unsigned char *
 base64_encode(const unsigned char *str, int length)
 {
 	const unsigned char *current = str;
@@ -132,7 +132,7 @@ base64_encode(const unsigned char *str, int length)
 	return result;
 }
 
-unsigned char *
+static unsigned char *
 base64_decode(const unsigned char *str, int length, int *ret)
 {
 	const unsigned char *current = str;
@@ -184,7 +184,7 @@ base64_decode(const unsigned char *str, int length, int *ret)
 	return result;
 }
 
-unsigned char *
+static unsigned char *
 read_challenge(FILE *f)
 {
 	static unsigned char buf[16384];
@@ -212,17 +212,68 @@ read_challenge(FILE *f)
 }
 
 
+/* --- EVP-based RSA OAEP decrypt matching RSA_private_decrypt(...OAEP...) --- */
+static int
+rsa_oaep_decrypt_sha1(EVP_PKEY *pkey,
+                      const unsigned char *in, size_t inlen,
+                      unsigned char *out, size_t *outlen)
+{
+	int ok = 0;
+	EVP_PKEY_CTX *ctx = NULL;
+	size_t tmplen = 0;
+
+	ctx = EVP_PKEY_CTX_new(pkey, NULL);
+	if(ctx == NULL)
+		goto done;
+
+	if(EVP_PKEY_decrypt_init(ctx) <= 0)
+		goto done;
+
+	/* Match RSA_PKCS1_OAEP_PADDING behavior */
+	if(EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0)
+		goto done;
+
+	/* Explicitly pin OAEP defaults to SHA-1 for wire-compatibility */
+	if(EVP_PKEY_CTX_set_rsa_oaep_md(ctx, EVP_sha1()) <= 0)
+		goto done;
+
+	if(EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, EVP_sha1()) <= 0)
+		goto done;
+
+	/* Determine required output length */
+	if(EVP_PKEY_decrypt(ctx, NULL, &tmplen, in, inlen) <= 0)
+		goto done;
+
+	if(tmplen > *outlen)
+		goto done;
+
+	if(EVP_PKEY_decrypt(ctx, out, &tmplen, in, inlen) <= 0)
+		goto done;
+
+	*outlen = tmplen;
+	ok = 1;
+
+done:
+	EVP_PKEY_CTX_free(ctx);
+	return ok;
+}
+
 int
 main(int argc, char **argv)
 {
 	FILE *kfile;
-	RSA *rsa = NULL;
-	SHA_CTX ctx;
-	unsigned char *ptr;
-	unsigned char *ndata, ddata[512];
-	int len;
+	EVP_PKEY *pkey = NULL;
 
-	/* respond privatefile challenge */
+	unsigned char *ptr;
+	unsigned char *ndata = NULL;
+	unsigned char *cipher = NULL;
+
+	unsigned char ddata[512];           /* decrypted */
+	unsigned char digest[EVP_MAX_MD_SIZE];
+	unsigned int digest_len = 0;
+
+	int clen = 0;
+
 	if (argc < 2)
 	{
 		puts("Error: Usage: respond privatefile");
@@ -235,41 +286,80 @@ main(int argc, char **argv)
 		return -1;
 	}
 
-	SSLeay_add_all_ciphers();
-	rsa = PEM_read_RSAPrivateKey(kfile, NULL,pass_cb, NULL);
-
-	if(!rsa)
-	{
-		puts("Error: Unable to read your private key, is the passphrase wrong?");
-		return -1;
-	}
-
+	/* Load private key using EVP */
+	pkey = PEM_read_PrivateKey(kfile, NULL, pass_cb, NULL);
 	fclose(kfile);
 
+	if (pkey == NULL)
+	{
+		puts("Error: Could not read private key.");
+		ERR_print_errors_fp(stderr);
+		return -1;
+	}
+
+	/* Only RSA keys are valid for this protocol */
+	if(EVP_PKEY_base_id(pkey) != EVP_PKEY_RSA)
+	{
+		puts("Error: Private key is not RSA.");
+		EVP_PKEY_free(pkey);
+		return -1;
+	}
+
 	ptr = read_challenge(stdin);
-	ndata = base64_decode(ptr, strlen((char *)ptr), &len);
-	if (ndata == NULL)
+	if(ptr == NULL)
 	{
 		puts("Error: Bad challenge.");
+		EVP_PKEY_free(pkey);
 		return -1;
 	}
 
-	if ((len = RSA_private_decrypt(len, (unsigned char*)ndata,
-		(unsigned char*)ddata, rsa, RSA_PKCS1_OAEP_PADDING)) == -1)
+	cipher = base64_decode(ptr, (int)strlen((char *)ptr), &clen);
+	if (cipher == NULL)
 	{
-		puts("Error: Decryption error.");
+		puts("Error: Bad challenge.");
+		EVP_PKEY_free(pkey);
 		return -1;
 	}
 
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, (unsigned char *)ddata, len);
-	SHA1_Final((unsigned char *)ddata, &ctx);
-	ndata = base64_encode((unsigned char *)ddata, SHA_DIGEST_LENGTH);
+	/* RSA OAEP decrypt */
+	size_t outlen = sizeof(ddata);
+	if(!rsa_oaep_decrypt_sha1(pkey, cipher, (size_t)clen, ddata, &outlen))
+	{
+		puts("Error: Decryption failed.");
+		ERR_print_errors_fp(stderr);
+		free(cipher);
+		EVP_PKEY_free(pkey);
+		return -1;
+	}
+
+	/* SHA1(decrypted_data) via EVP */
+	if(EVP_Digest(ddata, outlen, digest, &digest_len, EVP_sha1(), NULL) != 1)
+	{
+		puts("Error: Digest failed.");
+		ERR_print_errors_fp(stderr);
+		free(cipher);
+		EVP_PKEY_free(pkey);
+		return -1;
+	}
+
+	ndata = base64_encode(digest, (int)digest_len);
+	if(ndata == NULL)
+	{
+		puts("Error: Out of memory.");
+		free(cipher);
+		EVP_PKEY_free(pkey);
+		return -1;
+	}
+
 	if(isatty(fileno(stdin)))
-	{
 		fprintf(stderr, "Response: /quote CHALLENGE +");
-	}
+
 	puts((char *)ndata);
 	fflush(NULL);
+
+	free(ndata);
+	free(cipher);
+	EVP_PKEY_free(pkey);
 	return 0;
 }
+
